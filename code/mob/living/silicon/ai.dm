@@ -125,12 +125,6 @@ var/global/list/ai_emotions = list("Happy" = "ai_happy", \
 	req_access = list(access_heads)
 	var/obj/item/clothing/head/hat = null
 
-/*
-	var/datum/game_mode/malfunction/AI_Module/module_picker/malf_picker
-	var/processing_time = 100
-	var/list/datum/game_mode/malfunction/AI_Module/current_modules = list()
-
-*/
 	var/fire_res_on_core = 0
 
 	health = 250
@@ -139,6 +133,7 @@ var/global/list/ai_emotions = list("Happy" = "ai_happy", \
 	var/fireloss = 0
 
 	var/mob/living/intangible/aieye/eyecam = null
+	var/obj/minimap/ai/ai_station_map
 
 	var/deployed_to_eyecam = 0
 	var/datum/ai_hologram_data/holoHolder = new
@@ -207,6 +202,9 @@ var/global/list/ai_emotions = list("Happy" = "ai_happy", \
 	START_TRACKING
 
 	APPLY_ATOM_PROPERTY(src, PROP_MOB_EXAMINE_ALL_NAMES, src)
+
+	ai_station_map = new /obj/minimap/ai
+	AddComponent(/datum/component/minimap_marker, MAP_AI, "ai")
 
 	light = new /datum/light/point
 	light.set_color(0.4, 0.7, 0.95)

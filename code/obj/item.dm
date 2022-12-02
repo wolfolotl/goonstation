@@ -122,6 +122,7 @@
 	var/obj/item/holding = null
 	var/rarity = ITEM_RARITY_COMMON // Just a little thing to indicate item rarity. RPG fluff.
 	pressure_resistance = 50
+	/// This var fucking sucks. It's used for prox sensors and other stuff that when triggered trigger an item they're attached to. Why is this on /item i am so sad
 	var/obj/item/master = null
 	var/acid_survival_time //nadir support: set in minutes to override how long item will stay intact in contact with acid
 
@@ -407,9 +408,9 @@
 		logTheThing(LOG_COMBAT, user, "attempts to feed [constructTarget(M,"combat")] [src] [log_reagents(src)]")
 
 		if (!do_mob(user, M))
-			return 0
+			return 1
 		if (BOUNDS_DIST(user, M) > 0)
-			return 0
+			return 1
 
 		user.tri_message(M, "<span class='alert'><b>[user]</b> feeds [M] [src]!</span>",\
 			"<span class='alert'>You feed [M] [src]!</span>",\
@@ -454,8 +455,7 @@
 	if(src.burning || (src in by_cat[TR_CAT_BURNING_ITEMS]))
 		return
 	START_TRACKING_CAT(TR_CAT_BURNING_ITEMS)
-	src.visible_message("<span class='alert'>[src] catches on fire!</span>")
-	src.burning = 1
+	src.burning = TRUE
 	src.firesource = FIRESOURCE_OPEN_FLAME
 	if (istype(src, /obj/item/plant))
 		if (!GET_COOLDOWN(global, "hotbox_adminlog"))
@@ -673,7 +673,7 @@
 /obj/item/proc/click_drag_tk(atom/over_object, src_location, over_location, over_control, params)
 	if(!src.anchored)
 		if (iswraith(usr))
-			var/mob/wraith/W = usr
+			var/mob/living/intangible/wraith/W = usr
 			//Basically so poltergeists need to be close to an object to send it flying far...
 			if (W.weak_tk && !IN_RANGE(src, W, 2))
 				src.throw_at(over_object, 1, 1)
@@ -923,6 +923,7 @@
 	#ifdef COMSIG_ITEM_UNEQUIPPED
 	SEND_SIGNAL(src, COMSIG_ITEM_UNEQUIPPED, user)
 	#endif
+	src.hide_buttons()
 	for(var/datum/objectProperty/equipment/prop in src.properties)
 		prop.onUnequipped(src, user, src.properties[prop])
 	src.equipped_in_slot = null
@@ -1254,6 +1255,10 @@
 	if(user.is_hulk())
 		power *= 1.5
 
+	var/list/shield_amt = list()
+	SEND_SIGNAL(M, COMSIG_MOB_SHIELD_ACTIVATE, power, shield_amt)
+	power *= max(0, (1-shield_amt["shield_strength"]))
+
 	var/pre_armor_power = power
 	power -= armor_mod
 
@@ -1274,7 +1279,7 @@
 			fuckup_attack_particle(user)
 			armor_blocked = 1
 
-	if (can_disarm)
+	if (src.can_disarm && !((src.temp_flags & IS_LIMB_ITEM) && user == M))
 		msgs = user.calculate_disarm_attack(M, M.get_affecting(user), 0, 0, 0, is_shove = 1, disarming_item = src)
 	else
 		msgs.msg_group = "[usr]_attacks_[M]_with_[src]"
@@ -1293,6 +1298,7 @@
 			stam_power = stam_power / 2 //do the least
 		else
 			stam_power = max(  stam_power / 2, stam_power * ( power / (power + armor_mod) )  )
+		stam_power *= max(0, (1-shield_amt["shield_strength"]))
 
 		//stam_power -= armor_mod
 		msgs.force_stamina_target = 1
@@ -1417,7 +1423,7 @@
 
 	if(istype(src.loc, /obj/item/storage))
 		var/obj/item/storage/storage = src.loc
-		src.set_loc(get_turf(src)) // so the storage doesn't add it back >:(
+		src.set_loc(null) // so the storage doesn't add it back >:(
 		storage.hud?.remove_item(src)
 
 	var/turf/T = loc
@@ -1443,10 +1449,6 @@
 	if (!(locate(/obj/table) in T) && !(locate(/obj/rack) in T))
 		Ar.sims_score = min(Ar.sims_score + 4, 100)
 
-	if (event_handler_flags & IS_TRINKET) //slow but fast as i can get for now, rewrite trinket holding later
-		for(var/mob/living/carbon/human/M in mobs)
-			if (M.trinket == src)
-				M.trinket = null
 
 	if (special_grab || chokehold)
 		drop_grab()

@@ -9,6 +9,7 @@ ABSTRACT_TYPE(/obj/item/reagent_containers/food/snacks/condiment)
 	heal_amt = 0
 
 	heal(var/mob/M)
+		..()
 		boutput(M, "<span class='alert'>It's just not good enough on its own...</span>")
 
 	afterattack(atom/target, mob/user, flag)
@@ -147,7 +148,8 @@ ABSTRACT_TYPE(/obj/item/reagent_containers/food/snacks/condiment)
 	desc = "A little bottle for shaking things onto other things."
 	icon = 'icons/obj/foodNdrink/food.dmi'
 	icon_state = "shaker"
-	flags = FPRINT | TABLEPASS | ONBELT
+	flags = FPRINT | TABLEPASS
+	c_flags = ONBELT
 	w_class = W_CLASS_SMALL
 	g_amt = 10
 	var/stuff = null

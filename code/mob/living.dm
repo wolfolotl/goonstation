@@ -171,7 +171,7 @@
 		E.cancel_camera()
 
 	if (src.static_image)
-		mob_static_icons.Remove(src.static_image)
+		get_image_group(CLIENT_IMAGE_GROUP_GHOSTDRONE).remove_image(src.static_image)
 		src.static_image = null
 
 	if(src.ai_active)
@@ -512,7 +512,6 @@
 					for(var/obj/item/grab/gunpoint/G in grabbed_by)
 						G.shoot()
 
-				.= 0
 				return
 		else
 			var/reach = can_reach(src, target)
@@ -1249,7 +1248,7 @@
 	if (!islist(default_mob_static_icons))
 		return
 	if (src.static_image)
-		mob_static_icons.Remove(src.static_image)
+		get_image_group(CLIENT_IMAGE_GROUP_GHOSTDRONE).remove_image(src.static_image)
 	var/checkpath = src.static_type_override ? src.static_type_override : src.type
 	if (ishuman(src))
 		var/mob/living/carbon/human/H = src
@@ -1263,7 +1262,7 @@
 				src.static_image.override = 1
 				src.static_image.loc = src
 				src.static_image.plane = PLANE_LIGHTING
-				mob_static_icons.Add(src.static_image)
+				get_image_group(CLIENT_IMAGE_GROUP_GHOSTDRONE).add_image(src.static_image)
 				generate_static = 0
 		if (generate_static)
 			if (ispath(checkpath, /datum/mutantrace) && ishuman(src))
@@ -1277,7 +1276,7 @@
 				src.static_image.override = 1
 				src.static_image.loc = src
 				src.static_image.plane = PLANE_LIGHTING
-				mob_static_icons.Add(src.static_image)
+				get_image_group(CLIENT_IMAGE_GROUP_GHOSTDRONE).add_image(src.static_image)
 		return src.static_image
 
 /proc/check_static_defaults()
@@ -1883,29 +1882,48 @@ var/global/icon/human_static_base_idiocy_bullshit_crap = icon('icons/mob/human.d
 		else if(rangedprot_base > 1)
 			armor_msg = ", but [P] pierces through your armor!"
 
+
+		var/list/shield_amt = list()
+		var/shield_multiplier = 1
+
+		switch(P.proj_data.damage_type)
+			if(D_KINETIC, D_SLASHING, D_TOXIC)
+				shield_multiplier = 0.5
+			if(D_ENERGY, D_RADIOACTIVE)
+				shield_multiplier = 2
+
+		SEND_SIGNAL(src, COMSIG_MOB_SHIELD_ACTIVATE, P.power * shield_multiplier, shield_amt)
+		damage *= max(0, (1-shield_amt["shield_strength"]))
+		stun *= max(0, (1-shield_amt["shield_strength"]))
+
+
+		if (P.proj_data.damage_type & (D_KINETIC | D_PIERCING | D_SLASHING))
+			if (P.proj_data.hit_type & (DAMAGE_CUT | DAMAGE_STAB | DAMAGE_CRUSH))
+				take_bleeding_damage(src, null, round(damage / 3 * rangedprot_mod), P.proj_data.hit_type)
+			src.changeStatus("staggered", clamp(P.power/8, 5, 1) SECONDS)
+
 		switch(P.proj_data.damage_type)
 			if (D_KINETIC)
-				if (stun > 0)
-					src.remove_stamina(min(stun/rangedprot_mod * 30, 125)) //thanks to the odd scaling i have to cap this.
-					src.stamina_stun()
+				if (stun > 0) //kinetic weapons don't disorient
+					stun = stun / max(1, rangedprot_mod*0.75)
+					src.do_disorient(clamp(stun*4, P.proj_data.stun*2, stun+80), weakened = stun*2, stunned = stun*2, disorient = 0, remove_stamina_below_zero = 0, target_type = DISORIENT_NONE)
 
 				src.TakeDamage("chest", (damage/rangedprot_mod), 0, 0, P.proj_data.hit_type)
 				if (isalive(src))
 					lastgasp()
 
 			if (D_PIERCING)
-				if (stun > 0)
-					src.remove_stamina(min(stun/rangedprot_mod * 30, 125)) //thanks to the odd scaling i have to cap this.
-					src.stamina_stun()
+				if (stun > 0) //kinetic weapons don't disorient
+					src.do_disorient(clamp(stun*4, P.proj_data.stun*2, stun+80), weakened = stun*2, stunned = stun*2, disorient = 0, remove_stamina_below_zero = 0, target_type = DISORIENT_NONE)
 
 				src.TakeDamage("chest", damage/rangedprot_mod, 0, 0, P.proj_data.hit_type)
 				if (isalive(src))
 					lastgasp()
 
 			if (D_SLASHING)
-				if (stun > 0)
-					src.remove_stamina(min(stun/rangedprot_mod * 30, 125)) //thanks to the odd scaling i have to cap this.
-					src.stamina_stun()
+				if (stun > 0) //kinetic weapons don't disorient
+					stun = stun / rangedprot_mod
+					src.do_disorient(clamp(stun*4, P.proj_data.stun*2, stun+80), weakened = stun*2, stunned = stun*2, disorient = 0, remove_stamina_below_zero = 0, target_type = DISORIENT_NONE)
 
 				if (rangedprot_mod > 1)
 					src.TakeDamage("chest", (damage/rangedprot_mod), 0, 0, P.proj_data.hit_type)
@@ -1914,8 +1932,7 @@ var/global/icon/human_static_base_idiocy_bullshit_crap = icon('icons/mob/human.d
 
 			if (D_ENERGY)
 				if (stun > 0)
-					src.do_disorient(clamp(stun*4, P.proj_data.power*(1-P.proj_data.ks_ratio)*2, stun+80), weakened = stun*2, stunned = stun*2, disorient = min(stun,  80), remove_stamina_below_zero = 0)
-					src.emote("twitch_v")// for the above, flooring stam based off the power of the datum is intentional
+					src.do_disorient(clamp(stun*4, P.proj_data.stun*2, stun+80), weakened = stun*2, stunned = stun*2, disorient = min(stun,  80), remove_stamina_below_zero = 0) //only energy stunners apply disorient and are resisted
 
 				if (isalive(src)) lastgasp()
 
@@ -1925,8 +1942,7 @@ var/global/icon/human_static_base_idiocy_bullshit_crap = icon('icons/mob/human.d
 
 			if (D_BURNING)
 				if (stun > 0)
-					src.remove_stamina(min(stun/rangedprot_mod * 30, 125)) //thanks to the odd scaling i have to cap this.
-					src.stamina_stun()
+					src.do_disorient(clamp(stun*4, P.proj_data.stun*2, stun+80), weakened = stun*2, stunned = stun*2, disorient = 0, remove_stamina_below_zero = 0, target_type = DISORIENT_NONE)
 
 				if (src.is_heat_resistant())
 					// fire resistance should probably not let you get hurt by welders
@@ -1937,8 +1953,7 @@ var/global/icon/human_static_base_idiocy_bullshit_crap = icon('icons/mob/human.d
 
 			if (D_RADIOACTIVE)
 				if (stun > 0)
-					src.remove_stamina(min(stun/rangedprot_mod * 30, 125)) //thanks to the odd scaling i have to cap this.
-					src.stamina_stun()
+					src.do_disorient(clamp(stun*4, P.proj_data.stun*2, stun+80), weakened = stun*2, stunned = stun*2, disorient = 0, remove_stamina_below_zero = 0, target_type = DISORIENT_NONE)
 
 				src.reagents?.add_reagent("radium", damage/4) //fuckit
 				var/orig_val = GET_ATOM_PROPERTY(src, PROP_MOB_STAMINA_REGEN_BONUS)
@@ -1949,8 +1964,7 @@ var/global/icon/human_static_base_idiocy_bullshit_crap = icon('icons/mob/human.d
 
 			if (D_TOXIC)
 				if (stun > 0)
-					src.remove_stamina(min(stun/rangedprot_mod * 30, 125)) //thanks to the odd scaling i have to cap this.
-					src.stamina_stun()
+					src.do_disorient(clamp(stun*4, P.proj_data.stun*2, stun+80), weakened = stun*2, stunned = stun*2, disorient = 0, remove_stamina_below_zero = 1, target_type = DISORIENT_NONE)
 
 				if (!P.reagents)
 					src.take_toxin_damage(damage)

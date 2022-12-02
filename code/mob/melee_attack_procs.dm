@@ -653,9 +653,13 @@
 
 
 	var/pre_armor_damage = damage
+	var/list/shield_amt = list()
+	SEND_SIGNAL(target, COMSIG_MOB_SHIELD_ACTIVATE, damage, shield_amt)
+	damage *= max(0, (1-shield_amt["shield_strength"]))
 	if(do_armor)
 		//get target armor
 		var/armor_mod = 0
+
 		armor_mod = target.get_melee_protection(def_zone, DAMAGE_BLUNT)
 
 		//flat damage reduction by armor
@@ -678,6 +682,7 @@
 			stam_power *= (1/3) //do the least
 		else
 			stam_power *= clamp(damage/pre_armor_damage, 1, 1/3)
+		stam_power *= max(0, (1-shield_amt["shield_strength"]))
 
 		//record the stamina damage to do
 		msgs.stamina_target -= max(stam_power, 0)
@@ -1261,7 +1266,7 @@
 			R.ghoulTouch(target, affecting)
 
 //variant, using for werewolf pounce, to send mobs in a random direction and 50% chance to weaken them.
-/proc/wrestler_knockdown(var/mob/H, var/mob/T, /var/variant)
+/proc/wrestler_knockdown(var/mob/H, var/mob/T, var/variant)
 	if (!H || !ismob(H) || !T || !ismob(T))
 		return
 

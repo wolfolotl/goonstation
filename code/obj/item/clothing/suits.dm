@@ -574,6 +574,11 @@
 	item_state = "MDlonglabcoat"
 	coat_style = "MDlonglabcoat"
 
+	april_fools
+		icon_state = "MDlonglabcoat-alt"
+		item_state = "MDlonglabcoat-alt"
+		coat_style = "MDlonglabcoat-alt"
+
 /obj/item/clothing/suit/labcoat/pathology
 	name = "pathologist's labcoat"
 	desc = "A protective laboratory coat with the orange markings of a Pathologist."
@@ -1090,6 +1095,7 @@
 	c_flags = SPACEWEAR
 	body_parts_covered = TORSO|LEGS|ARMS
 	var/rip = 0
+	acid_survival_time = 3 MINUTES
 
 	setupProperties()
 		..()
@@ -1132,6 +1138,9 @@
 	New()
 		..()
 		START_TRACKING_CAT(TR_CAT_NUKE_OP_STYLE)
+
+	setupProperties()
+		..()
 		setProperty("heatprot", 35)
 
 	#ifdef MAP_OVERRIDE_POD_WARS

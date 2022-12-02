@@ -446,7 +446,7 @@
 
 	New()
 		. = ..()
-		RegisterSignal(src, list(COMSIG_ITEM_ATTACKBY_PRE), .proc/pre_attackby)
+		RegisterSignal(src, COMSIG_ITEM_ATTACKBY_PRE, .proc/pre_attackby)
 
 	get_desc()
 		// We display this on a separate line and with a different color to show emphasis
@@ -905,7 +905,8 @@
 	hitsound = 'sound/machines/chainsaw.ogg'
 	hit_type = DAMAGE_CUT
 	tool_flags = TOOL_SAWING
-	flags = ONBELT | FPRINT | TABLEPASS
+	flags = FPRINT | TABLEPASS
+	c_flags = ONBELT
 	w_class = W_CLASS_NORMAL
 
 	proc/finish_decon(atom/target,mob/user) // deconstructing work

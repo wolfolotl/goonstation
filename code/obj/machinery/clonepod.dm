@@ -207,7 +207,7 @@
 	// Start cloning someone (transferring mind + DNA into new body),
 	// starting a new clone cycle if needed
 	// Returns 1 (stated) or 0 (failed to start for some reason)
-	proc/growclone(mob/ghost as mob, var/clonename, var/datum/mind/mindref, var/datum/bioHolder/oldholder, var/datum/abilityHolder/oldabilities, var/datum/traitHolder/traits)
+	proc/growclone(mob/ghost as mob, var/clonename, var/datum/mind/mindref, var/datum/bioHolder/oldholder, var/datum/abilityHolder/oldabilities, var/datum/traitHolder/traits, var/datum/cloner_defect_holder/defects)
 		if (((!ghost) || (!ghost.client)) || src.mess || src.attempting)
 			return 0
 
@@ -257,11 +257,15 @@
 		if(src.occupant.client) // gross hack for resetting tg layout bleh bluh
 			src.occupant.client.set_layout(src.occupant.client.tg_layout)
 
-		if(!src.perfect_clone && src.occupant.bioHolder.clone_generation > 1)
-			var/health_penalty = (src.occupant.bioHolder.clone_generation - 1) * 15
-			src.occupant.setStatus("maxhealth-", null, -health_penalty)
-			if(health_penalty >= 100)
-				src.occupant.unlock_medal("Quit Cloning Around")
+		// Little weird- we only want to apply cloner defects after they're ejected, so we apply it as soon as they change loc instead of right now
+		defects.apply_to_on_move(src.occupant)
+
+		if (!src.clonehack) // syndies get good clones
+			for (var/i in 1 to rand(0, 3)) // uniform chance between 0-3
+				defects.add_random_cloner_defect()
+
+		if (length(defects.active_cloner_defects) > 7)
+			src.occupant.unlock_medal("Quit Cloning Around")
 
 		src.mess = FALSE
 		var/is_puritan = FALSE
@@ -332,7 +336,7 @@
 
 		// -- End mode specific stuff
 
-		logTheThing(LOG_COMBAT, usr, "starts cloning [constructTarget(src.occupant,"combat")] at [log_loc(src)].")
+		logTheThing(LOG_STATION, usr, "starts cloning [constructTarget(src.occupant,"combat")] at [log_loc(src)].")
 
 		if (isobserver(ghost))
 			qdel(ghost) //Don't leave ghosts everywhere!!
@@ -588,7 +592,7 @@
 				boutput(user,"<span class='alert'>The cloning pod emits an angry boop!</span>")
 				return
 			user.visible_message("[user] installs [W] into [src].", "You install [W] into [src].")
-			logTheThing(LOG_COMBAT, src, "[user] installed ([W]) to ([src]) at [log_loc(user)].")
+			logTheThing(LOG_STATION, src, "[user] installed ([W]) to ([src]) at [log_loc(user)].")
 			speed_bonus *= 3
 			meat_used_per_tick *= 4
 			is_speedy = 1
@@ -604,7 +608,7 @@
 				boutput(user,"<span class='alert'>The cloning pod emits a[pick("n angry", " grumpy", "n annoyed", " cheeky")] [pick("boop","bop", "beep", "blorp", "burp")]!</span>")
 				return
 			user.visible_message("[user] installs [W] into [src].", "You install [W] into [src].")
-			logTheThing(LOG_COMBAT, src, "[user] installed ([W]) to ([src]) at [log_loc(user)].")
+			logTheThing(LOG_STATION, src, "[user] installed ([W]) to ([src]) at [log_loc(user)].")
 			meat_used_per_tick *= 0.5
 			is_efficient = 1
 			user.drop_item()
@@ -615,7 +619,7 @@
 			if (operating && attempting)
 				boutput(user,"<span class='alert'>The cloning pod emits a[pick("n angry", " grumpy", "n annoyed", " cheeky")] [pick("boop","bop", "beep", "blorp", "burp")]!</span>")
 				return
-			logTheThing(LOG_COMBAT, src, "[user] installed ([W]) to ([src]) at [log_loc(user)].")
+			logTheThing(LOG_STATION, src, "[user] installed ([W]) to ([src]) at [log_loc(user)].")
 			clonehack = 1
 			implant_hacker = user
 			light.enable()

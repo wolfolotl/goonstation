@@ -54,7 +54,7 @@
 				return
 
 			src.antagonist_type = pick(list("Blob", "Hunter", "Werewolf", "Wizard", "Wraith", "Wrestler", "Wrestler_Doodle", "Vampire", "Changeling", "Flockmind"))
-			for(var/mob/wraith/W in ticker.mode.traitors)
+			for(var/mob/living/intangible/wraith/W in ticker.mode.traitors)
 				if(W.deaths < 2)
 					src.antagonist_type -= list("Wraith")
 					src.antagonist_type = pick(list())
@@ -107,8 +107,8 @@
 
 		// 1: alert | 2: alert (chatbox) | 3: alert acknowledged (chatbox) | 4: no longer eligible (chatbox) | 5: waited too long (chatbox)
 		var/list/text_messages = list()
-		text_messages.Add("Would you like to respawn as a random event antagonist? Your name will be added to the list of eligible candidates and may be selected at random by the game.") // Don't disclose which type it is. You know, metagaming.
-		text_messages.Add("You are eligible to be respawned as a random event antagonist. You have [src.ghost_confirmation_delay / 10] seconds to respond to the offer.")
+		text_messages.Add("Would you like to respawn as a [src.antagonist_type] antagonist? Your name will be added to the list of eligible candidates and may be selected at random by the game.") // Do disclose which type it is. You know, ghosts can already metagame in a myriad of ways.
+		text_messages.Add("You are eligible to be respawned as a [src.antagonist_type] antagonist. You have [src.ghost_confirmation_delay / 10] seconds to respond to the offer.")
 		text_messages.Add("You have been added to the list of eligible candidates. The game will pick a player soon. Good luck!")
 
 		// The proc takes care of all the necessary work (job-banned etc checks, confirmation delay).
@@ -119,6 +119,7 @@
 			message_admins("Couldn't set up Antagonist Spawn ([src.antagonist_type]); no ghosts responded. Source: [source ? "[source]" : "random"]")
 			logTheThing(LOG_ADMIN, null, "Couldn't set up Antagonist Spawn ([src.antagonist_type]); no ghosts responded. Source: [source ? "[source]" : "random"]")
 			src.post_event()
+			global.random_events.next_spawn_event = TIME + 1 MINUTE
 			return
 
 		for(var/antag_idx in 1 to src.antag_count)
@@ -199,7 +200,7 @@
 						send_to = 3
 
 						SPAWN(0)
-							var/newname = input(B, "You are a Blob. Please choose a name for yourself, it will show in the form: <name> the Blob", "Name change") as text
+							var/newname = tgui_input_text(B, "You are a Blob. Please choose a name for yourself, it will show in the form: <name> the Blob", "Name change")
 							if (B && newname)
 								phrase_log.log_phrase("name-blob", newname, no_duplicates=TRUE)
 								if (length(newname) >= 26) newname = copytext(newname, 1, 26)
@@ -224,7 +225,7 @@
 						failed = 1
 
 				if ("Wraith")
-					var/mob/wraith/W = M3.make_wraith()
+					var/mob/living/intangible/wraith/W = M3.make_wraith()
 					if (W && istype(W))
 						M3 = W
 						role = ROLE_WRAITH

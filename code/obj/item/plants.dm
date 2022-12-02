@@ -486,15 +486,7 @@
 	attack_hand(mob/user)
 		var/mob/living/carbon/human/H = user
 		if(istype(H) && src.thorned)
-			if (H.hand)//gets active arm - left arm is 1, right arm is 0
-				if (istype(H.limbs.l_arm,/obj/item/parts/robot_parts) || istype(H.limbs.l_arm,/obj/item/parts/human_parts/arm/left/synth))
-					..()
-					return
-			else
-				if (istype(H.limbs.r_arm,/obj/item/parts/robot_parts) || istype(H.limbs.r_arm,/obj/item/parts/human_parts/arm/right/synth))
-					..()
-					return
-			if(H.gloves)
+			if (src.thorns_protected(H))
 				..()
 				return
 			if(ON_COOLDOWN(src, "prick_hands", 1 SECOND))
@@ -502,6 +494,16 @@
 			src.prick(user)
 		else
 			..()
+
+	proc/thorns_protected(mob/living/carbon/human/H)
+		if (H.hand)//gets active arm - left arm is 1, right arm is 0
+			if (istype(H.limbs.l_arm,/obj/item/parts/robot_parts) || istype(H.limbs.l_arm,/obj/item/parts/human_parts/arm/left/synth))
+				return TRUE
+		else
+			if (istype(H.limbs.r_arm,/obj/item/parts/robot_parts) || istype(H.limbs.r_arm,/obj/item/parts/human_parts/arm/right/synth))
+				return TRUE
+		if(H.gloves)
+			return TRUE
 
 	proc/prick(mob/M)
 		boutput(M, "<span class='alert'>You prick yourself on [src]'s thorns trying to pick it up!</span>")
@@ -525,6 +527,13 @@
 			return TRUE
 		..()
 
+	pickup(mob/user)
+		. = ..()
+		if(ishuman(user) && src.thorned && !src.thorns_protected(user))
+			src.prick(user)
+			SPAWN(0.1 SECONDS)
+				user.drop_item(src, FALSE)
+
 /obj/item/plant/flower/rose/poisoned
 	attack(mob/M, mob/user, def_zone)
 		if (!..() || is_incapacitated(M))
@@ -544,7 +553,8 @@
 				M.bioHolder.AddEffect("dead_scan", timeleft = 40 SECONDS, do_stability = FALSE, magical = TRUE)
 			else
 				M.reagents?.add_reagent("capulettium", 13)
-		M.bioHolder?.AddEffect("mute", timeleft = 40 SECONDS, do_stability = FALSE, magical = TRUE)
+		//DO NOT add the SECONDS define to this, bioHolders are cursed and don't believe in ticks
+		M.bioHolder?.AddEffect("mute", timeleft = 40, do_stability = FALSE, magical = TRUE)
 
 /obj/item/plant/flower/rose/holorose
 	name = "holo rose"

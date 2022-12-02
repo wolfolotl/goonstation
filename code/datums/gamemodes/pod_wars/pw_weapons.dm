@@ -109,7 +109,7 @@
 	icon_state = "recharger_cell"
 	charge = 200
 	max_charge = 200
-	recharge_rate = 10
+	recharge_rate = 5
 
 /obj/item/ammo/power_cell/self_charging/pod_wars_standard
 	name = "Power Cell - Standard Radioisotope"
@@ -118,7 +118,7 @@
 	icon_state = "recharger_cell"
 	charge = 300
 	max_charge = 300
-	recharge_rate = 15
+	recharge_rate = 8
 
 /obj/item/ammo/power_cell/self_charging/pod_wars_high
 	name = "Power Cell - Robust Radioisotope "
@@ -127,7 +127,7 @@
 	icon_state = "recharger_cell"
 	charge = 350
 	max_charge = 350
-	recharge_rate = 30
+	recharge_rate = 15
 
 //////////survival_machete//////////////
 /obj/item/survival_machete
@@ -186,7 +186,7 @@
 			if (istype(L))
 
 				// var/datum/projectile/P = new PJ.spread_projectile_type		//dummy projectile to get power level
-				L.TakeDamage("chest", 0, ((initial(custom_projectile_type.power)/4)*pellets_to_fire)/L.get_ranged_protection(), 0, DAMAGE_BURN)
+				L.TakeDamage("chest", 0, ((initial(custom_projectile_type.damage)/4)*pellets_to_fire)/L.get_ranged_protection(), 0, DAMAGE_BURN)
 				L.emote("twitch_v")
 			else
 				shoot_projectile_ST(get_turf(src), PJ, get_step(src, NORTH))

@@ -61,6 +61,8 @@
 
 /obj/machinery/recharge_station/ex_act(severity)
 	src.go_out()
+	if (severity > 1 && src.conversion_chamber) //syndie version is a little tougher
+		return
 	return ..(severity)
 
 /obj/machinery/recharge_station/attack_hand(mob/user)
@@ -174,10 +176,12 @@
 /obj/machinery/recharge_station/MouseDrop_T(atom/movable/AM as mob|obj, mob/user as mob)
 	if (BOUNDS_DIST(AM, user) > 0 || BOUNDS_DIST(src, user) > 0)
 		return
+	if (!isturf(AM.loc) && !(AM in user))
+		return
 	if (!isliving(user) || isAI(user))
 		return
 
-	if (isitem(AM) && !user.stat)
+	if (isitem(AM) && can_act(user))
 		src.Attackby(AM, user)
 		return
 
@@ -619,7 +623,7 @@
 				return
 			if(newname && newname != R.name)
 				phrase_log.log_phrase("name-cyborg", newname, no_duplicates=TRUE)
-			logTheThing(LOG_COMBAT, user, "uses a docking station to rename [constructTarget(R,"combat")] to [newname].")
+			logTheThing(LOG_STATION, user, "uses a docking station to rename [constructTarget(R,"combat")] to [newname].")
 			R.real_name = "[newname]"
 			R.UpdateName()
 			if (R.internal_pda)

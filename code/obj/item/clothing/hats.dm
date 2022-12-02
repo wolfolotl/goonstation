@@ -130,6 +130,7 @@ proc/filter_trait_hats(var/type)
 	hides_from_examine = C_EARS|C_MASK|C_GLASSES
 	seal_hair = 1
 	path_prot = 0
+	acid_survival_time = 3 MINUTES
 
 	setupProperties()
 		..()
@@ -1021,6 +1022,7 @@ proc/filter_trait_hats(var/type)
 
 	unequipped(mob/user)
 		..()
+		logTheThing(LOG_COMBAT, user, "unequipped [src] at [log_loc(src)].")
 		processing_items.Remove(src)
 		processing = 0
 		return
@@ -1028,7 +1030,7 @@ proc/filter_trait_hats(var/type)
 
 	equipped(var/mob/user, var/slot)
 		..()
-		logTheThing(LOG_COMBAT, user, "equipped [src].")
+		logTheThing(LOG_COMBAT, user, "equipped [src] at [log_loc(src)].")
 		if (!src.processing)
 			src.processing++
 			processing_items |= src

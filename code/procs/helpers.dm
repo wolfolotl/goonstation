@@ -481,10 +481,10 @@ proc/get_angle(atom/a, atom/b)
 	. = dir2text(angle2dir(degree))
 
 /proc/text_input(var/Message, var/Title, var/Default, var/length=MAX_MESSAGE_LEN)
-	. = sanitize(input(Message, Title, Default) as text, length)
+	. = sanitize(tgui_input_text(usr, Message, Title, Default), length)
 
 /proc/scrubbed_input(var/user, var/Message, var/Title, var/Default, var/length=MAX_MESSAGE_LEN)
-	. = strip_html(input(user, Message, Title, Default) as null|text, length)
+	. = strip_html(tgui_input_text(user, Message, Title, Default), length)
 
 /proc/LinkBlocked(turf/A, turf/B)
 	if(A == null || B == null) return 1
@@ -664,7 +664,7 @@ proc/get_angle(atom/a, atom/b)
 		if(C.client)
 			. += C
 		LAGCHECK(LAG_REALTIME)
-	for(var/mob/wraith/M in mobs)
+	for(var/mob/living/intangible/wraith/M in mobs)
 		. += M
 		LAGCHECK(LAG_REALTIME)
 	for(var/mob/living/intangible/blob_overmind/M in mobs)
@@ -2084,6 +2084,24 @@ proc/countJob(rank)
 				return C.mob
 
 /**
+  * Given a ckey finds a mob with that ckey even if they are not in the game.
+  */
+/proc/ckey_to_mob_maybe_disconnected(target as text, exact=1)
+	if(isnull(target))
+		return
+	target = ckey(target)
+	for(var/mob/M in mobs)
+		if(M.ckey == target)
+			return M
+	if(!exact)
+		for(var/mob/M in mobs) // prefix match second
+			if(copytext(M.ckey, 1, length(target) + 1) == target)
+				return M
+		for(var/mob/M in mobs) // substring match third
+			if (findtext(M.ckey, target))
+				return M
+
+/**
   * Finds whoever's dead.
 	*/
 /proc/whodead()
@@ -2375,29 +2393,31 @@ proc/gradientText(var/color1, var/color2, message)
   . = result.Join()
 
 /**
-  * Returns given text replaced by nonsense chars, on a 40% or given % basis
+  * Returns given text replaced by nonsense chars, excepting HTML tags, on a 40% or given % basis
   */
 proc/radioGarbleText(var/message, var/per_letter_corruption_chance=40)
+	var/split_html_text = splittext(message,  regex("<\[^>\]*>"), 1, length(message), TRUE) //I'd love to just use include_delimiters=TRUE, but byond
 	var/list/corruptedChars = list("@","#","!",",",".","-","=","/","\\","'","\"","`","*","(",")","[","]","_","&")
-	. = ""
-	for(var/i=1 to length(message))
-		if(prob(per_letter_corruption_chance))
-			// corrupt that letter
-			. += pick(corruptedChars)
-		else
-			. += copytext(message, i, i+1)
+	. = list()
+	for(var/text_bit in split_html_text)
+		if(findtext(text_bit, regex("<\[^>\]*>")))
+			. += text_bit
+			continue
+		var/corrupted_bit = ""
+		for(var/i=1 to length(text_bit))
+			if(prob(per_letter_corruption_chance))
+				corrupted_bit += pick(corruptedChars)
+			else
+				corrupted_bit += copytext(text_bit, i, i+1)
+		. += corrupted_bit
+	return jointext(.,"")
+
 
 /**
   * Returns given text replaced entirely by nonsense chars
   */
 proc/illiterateGarbleText(var/message)
 	. = radioGarbleText(message, 100)
-
-/**
-  * Returns given text replaced by nonsense but its based off of a modifier + flock's garblyness
-  */
-proc/flockBasedGarbleText(var/message, var/modifier, var/datum/flock/f = null)
-	if(f?.snooping) . = radioGarbleText(message, f.snoop_clarity + modifier)
 
 /**
   * Returns the time in seconds since a given timestamp
@@ -2624,3 +2644,7 @@ proc/connectdirs_to_byonddirs(var/connectdir_bitflag)
 		return "[locfinder.group[1]][locfinder.group[2]][offset ? ":[offset]":""][locfinder.group[4]]"
 	else
 		return new_screen_loc //regex failed to match, just use what we got
+
+/// For runtime logs- returns the thing's name, type, and ref as a string
+/proc/identify_object(datum/thing)
+	. = "[thing] \[\ref[thing]\] ([thing.type])"
