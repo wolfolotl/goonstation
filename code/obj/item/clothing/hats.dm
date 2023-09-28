@@ -1993,29 +1993,29 @@ ABSTRACT_TYPE(/obj/item/clothing/head/elephanthat)
 	icon_state = "elephant-gold"
 	item_state = "elephant-gold"
 
-	gold
-		icon_state = "elephant-gold"
-		item_state = "elephant-gold"
+/obj/item/clothing/head/elephanthat/gold
+	icon_state = "elephant-gold"
+	item_state = "elephant-gold"
 
-	blue
-		icon_state = "elephant-blue"
-		item_state = "elephant-blue"
+/obj/item/clothing/head/elephanthat/blue
+	icon_state = "elephant-blue"
+	item_state = "elephant-blue"
 
-	pink
-		icon_state = "elephant-pink"
-		item_state = "elephant-pink"
+/obj/item/clothing/head/elephanthat/pink
+	icon_state = "elephant-pink"
+	item_state = "elephant-pink"
 
-	green
-		icon_state = "elephant-green"
-		item_state = "elephant-green"
+/obj/item/clothing/head/elephanthat/green
+	icon_state = "elephant-green"
+	item_state = "elephant-green"
 
-	random
-		New()
-				var/old_loc = src.loc
-       		qdel(src)
-			src = get_random_subtype(/obj/item/clothing/head/elephanthat,TRUE)
-			src.set_loc(old_loc)
-        	..()
+/obj/item/clothing/head/elephanthat/random
+	New()
+		var/old_loc = src.loc
+		qdel(src)
+		src = get_random_subtype(/obj/item/clothing/head/elephanthat,TRUE)
+		src.set_loc(old_loc)
+		..()
 
 /obj/item/clothing/head/minotaurmask
 	name = "minotaur mask"
@@ -2033,42 +2033,46 @@ TYPEINFO(/obj/item/clothing/head/mushroomcap)
 ABSTRACT_TYPE(/obj/item/clothing/head/mushroomcap)
 /obj/item/clothing/head/mushroomcap
 	name = "mushroom cap"
-	desc = "Makes your lungs feel a little fuzzy.[additional_desc]"
+	desc = "Makes your lungs feel a little fuzzy."
 	var/additional_desc = ""
 	icon_state = "mushroom-red"
 	item_state = "mushroom-red"
 
-	red
-		name = "red mushroom cap"
-		additional_desc = " Don't nibble on this one."
-		icon_state = "mushroom-red"
-		item_state = "mushroom-red"
+	get_desc()
+		. = ..()
+		. += " [src.additional_desc]"
 
-	shiitake
-		name = "shiitake mushroom cap"
-		additional_desc = " But it smells delectable."
-		icon_state = "mushroom-shiitake"
-		item_state = "mushroom-shiitake"
+/obj/item/clothing/head/mushroomcap/red
+	name = "red mushroom cap"
+	additional_desc = " Don't nibble on this one."
+	icon_state = "mushroom-red"
+	item_state = "mushroom-red"
 
-	indigo
-		name = "indigo mushroom cap"
-		additional_desc = " It has an enticing blue hue."
-		icon_state = "mushroom-indigo"
-		item_state = "mushroom-indigo"
+/obj/item/clothing/head/mushroomcap/shiitake
+	name = "shiitake mushroom cap"
+	additional_desc = " But it smells delectable."
+	icon_state = "mushroom-shiitake"
+	item_state = "mushroom-shiitake"
 
-	inky
-		name = "inky mushroom cap"
-		additional_desc = " Impressively, the inkdrops never fully drip off."
-		icon_state = "mushroom-inky"
-		item_state = "mushroom-inky"
+/obj/item/clothing/head/mushroomcap/indigo
+	name = "indigo mushroom cap"
+	additional_desc = " It has an enticing blue hue."
+	icon_state = "mushroom-indigo"
+	item_state = "mushroom-indigo"
 
-	random
-		New()
-				var/old_loc = src.loc
-        	qdel(src)
-        	src = get_random_subtype(/obj/item/clothing/head/mushroomcap,TRUE)
-        	src.set_loc(old_loc)
-        	..()
+/obj/item/clothing/head/mushroomcap/inky
+	name = "inky mushroom cap"
+	additional_desc = " Impressively, the inkdrops never fully drip off."
+	icon_state = "mushroom-inky"
+	item_state = "mushroom-inky"
+
+/obj/item/clothing/head/mushroomcap/random
+	New()
+		var/old_loc = src.loc
+		qdel(src)
+		src = get_random_subtype(/obj/item/clothing/head/mushroomcap,TRUE)
+		src.set_loc(old_loc)
+		..()
 
 /obj/item/clothing/head/axehat
 	name = "axe headband"
